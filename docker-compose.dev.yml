@@ -23,3 +23,21 @@ services:
 
   postgres:
     container_name: database_dev
+
+    # --- 👇 ここから追加 ---
+  studio:
+    build:
+      context: ./api
+      target: dev
+    container_name: studio_dev
+    networks:
+      - app_network
+    ports:
+      - "5544:5555"
+    command: >
+      sh -c "yarn prisma generate && yarn prisma studio --hostname 0.0.0.0"
+    depends_on:
+      - postgres
+    volumes:
+      - ./api:/app
+      - /app/node_modules

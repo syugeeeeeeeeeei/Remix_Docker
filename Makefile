@@ -16,32 +16,18 @@ build-dev:
 logs-dev:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f
 
-# --- 👇 ここから追加 ---
 # データベースマイグレーションを実行する
 migrate-dev:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api yarn prisma migrate dev
 
+# --- 👇 ここから追加 ---
+# Prisma Clientの型定義を生成する
+generate-dev:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api yarn prisma generate
+# --- 👆 ここまで追加 ---
+
 # apiコンテナのbashに入る
 exec-api:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml exec api bash
-# --- 👆 ここまで追加 ---
 
-
-# 本番環境用のコマンド
-# --------------------------------------------------
-up-prod:
-	docker compose -f docker-compose.yml up -d
-
-down-prod:
-	docker compose -f docker-compose.yml down
-
-build-prod:
-	docker compose -f docker-compose.yml build
-
-logs-prod:
-	docker compose -f docker-compose.yml logs -f
-
-# その他
-# --------------------------------------------------
-prune:
-	docker system prune --volumes -f
+# (以下、本番環境用のコマンドなど)
