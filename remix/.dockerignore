@@ -1,0 +1,17 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log
+
+# Build artifacts
+build
+public/build
+
+# Remix
+.cache
+
+# Environment
+.env

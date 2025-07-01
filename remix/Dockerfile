@@ -1,13 +1,21 @@
+# ステージ0: Corepackを有効化した共通ベースイメージ
+# これにより、以降のステージで正しいYarnのバージョンが使われる
+FROM node:lts-alpine AS base
+RUN corepack enable
+
+# -----------------------------------------------
 # ステージ1: 依存関係のインストール
-FROM node:lts-alpine AS deps
+# -----------------------------------------------
+FROM base AS deps
 WORKDIR /app
 COPY package.json yarn.lock* ./
+# package.jsonで指定されたバージョンのYarnでインストールが実行される
 RUN yarn install --frozen-lockfile
 
 # -----------------------------------------------
 # ステージ2: 開発環境 (target: dev)
 # -----------------------------------------------
-FROM node:lts-alpine AS dev
+FROM base AS dev
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -17,7 +25,7 @@ CMD ["yarn", "dev"]
 # -----------------------------------------------
 # ステージ3: 本番ビルド
 # -----------------------------------------------
-FROM node:lts-alpine AS builder
+FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -26,7 +34,7 @@ RUN yarn build
 # -----------------------------------------------
 # ステージ4: 本番環境 (target: prod)
 # -----------------------------------------------
-FROM node:lts-alpine AS prod
+FROM base AS prod
 WORKDIR /app
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
