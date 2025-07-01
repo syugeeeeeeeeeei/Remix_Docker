@@ -13,6 +13,7 @@ COPY package.json yarn.lock* ./
 RUN yarn config set nodeLinker node-modules
 RUN yarn install --frozen-lockfile
 
+
 # -----------------------------------------------
 # ステージ2: 開発環境 (target: dev)
 # -----------------------------------------------
@@ -20,8 +21,10 @@ FROM base AS dev
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# ヘルスチェックに必要なcurlをインストール
+RUN apk add --no-cache curl
 # 開発サーバーを起動
-CMD ["yarn", "start:dev"]
+CMD ["sh", "-c", "yarn exec prisma generate && yarn start:dev"]
 
 # -----------------------------------------------
 # ステージ3: 本番ビルド

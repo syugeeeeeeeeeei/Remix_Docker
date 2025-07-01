@@ -9,6 +9,15 @@ declare module "@remix-run/node" {
 }
 
 export default defineConfig({
+  server: {
+    host: "0.0.0.0",
+    port: 5173, // コンテナ内でリッスンするポートを指定
+    hmr: {
+      // ブラウザ側が接続するべきポートを指定
+      clientPort: 5173,
+    },
+  },
+
   plugins: [
     remix({
       future: {

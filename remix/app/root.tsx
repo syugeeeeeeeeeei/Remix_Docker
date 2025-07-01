@@ -1,11 +1,13 @@
+import type { LinksFunction } from "@remix-run/node";
 import {
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  isRouteErrorResponse,
+  useRouteError,
 } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
 
 import "./tailwind.css";
 
@@ -22,7 +24,8 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+// 通常時のレイアウト
+export default function App() {
   return (
     <html lang="en">
       <head>
@@ -32,7 +35,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <Outlet />
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -40,6 +43,36 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
-  return <Outlet />;
+// --- 👇 ここを修正 ---
+// エラー発生時にレンダリングされるコンポーネント
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  let title = "Error!";
+  let message = "Something went wrong.";
+
+  if (isRouteErrorResponse(error)) {
+    title = `${error.status} ${error.statusText}`;
+    message = error.data;
+  } else if (error instanceof Error) {
+    message = error.message;
+  }
+
+  return (
+    <html lang="en">
+      <head>
+        <title>{title}</title>
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        <div className="flex h-screen flex-col items-center justify-center text-center">
+          <h1 className="text-4xl font-bold">{title}</h1>
+          <p className="mt-4">{message}</p>
+        </div>
+        <Scripts />
+      </body>
+    </html>
+  );
 }
+// --- 👆 ここまで ---
