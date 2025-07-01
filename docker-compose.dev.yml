@@ -7,6 +7,9 @@ services:
     volumes:
       - ./remix:/app
       - /app/node_modules # ホストのnode_modulesをマウントしない
+    tty: true
+    stdin_open: true
+
 
   api:
     build:
@@ -15,6 +18,9 @@ services:
     volumes:
       - ./api:/app
       - /app/node_modules
+    tty: true
+    stdin_open: true
+
 
   postgres:
     container_name: database_dev

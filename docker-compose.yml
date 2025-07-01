@@ -13,6 +13,8 @@ services:
       - app_network
     env_file:
       - ./remix/.env
+    tty: true
+    stdin_open: true
 
   # Backend API Service (NestJS)
   api:
@@ -29,10 +31,13 @@ services:
       - app_network
     env_file:
       - ./api/.env
+    tty: true
+    stdin_open: true
+
 
   # Database Service (PostgreSQL)
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: database_prod
     environment:
       POSTGRES_USER: user
