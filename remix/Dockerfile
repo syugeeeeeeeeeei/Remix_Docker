@@ -2,6 +2,8 @@
 # これにより、以降のステージで正しいYarnのバージョンが使われる
 FROM node:lts-alpine AS base
 RUN corepack enable
+RUN yarn set version stable
+
 
 # -----------------------------------------------
 # ステージ1: 依存関係のインストール
@@ -9,7 +11,8 @@ RUN corepack enable
 FROM base AS deps
 WORKDIR /app
 COPY package.json yarn.lock* ./
-# package.jsonで指定されたバージョンのYarnでインストールが実行される
+# Yarn v2+ (Berry)がPnPモードの場合でもnode_modulesを生成するように設定
+RUN yarn config set nodeLinker node-modules
 RUN yarn install --frozen-lockfile
 
 # -----------------------------------------------
