@@ -1,0 +1,59 @@
+services:
+  # Frontend Service (Remix)
+  remix:
+    build:
+      context: ./remix
+      target: prod # 本番ステージをビルド
+    container_name: remix_app_prod
+    ports:
+      - "4000:3000"
+    depends_on:
+      - api
+    networks:
+      - app_network
+    env_file:
+      - ./remix/.env
+
+  # Backend API Service (NestJS)
+  api:
+    build:
+      context: ./api
+      target: prod # 本番ステージをビルド
+    container_name: api_server_prod
+    ports:
+      - "3001:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_network
+    env_file:
+      - ./api/.env
+
+  # Database Service (PostgreSQL)
+  postgres:
+    image: postgres:16-alpine
+    container_name: database_prod
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: myapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d myapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
