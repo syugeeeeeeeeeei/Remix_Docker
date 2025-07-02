@@ -1,10 +1,11 @@
+// api/src/posts/posts.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Post } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class PostsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // 全記事取得
   async findAll(): Promise<Post[]> {
@@ -26,11 +27,10 @@ export class PostsService {
   }
 
   // 記事を作成
-  // TODO: 認証機能実装後、authorIdをリクエストから取得するように変更
   async create(data: {
     title: string;
     content?: string;
-    authorId: number; // 現時点では仮でIDを直接受け取る
+    authorId: number;
   }): Promise<Post> {
     return this.prisma.post.create({
       data,
@@ -42,7 +42,7 @@ export class PostsService {
     id: number,
     data: { title?: string; content?: string },
   ): Promise<Post> {
-    // 記事が存在するか確認
+    // 記事が存在するか確認（findOneでNotFoundExceptionがスローされる）
     await this.findOne(id);
     return this.prisma.post.update({
       where: { id },
@@ -52,10 +52,21 @@ export class PostsService {
 
   // 記事を削除
   async remove(id: number): Promise<Post> {
-    // 記事が存在するか確認
+    // 記事が存在するか確認（findOneでNotFoundExceptionがスローされる）
     await this.findOne(id);
     return this.prisma.post.delete({
       where: { id },
     });
+  }
+
+  /**
+   * 指定されたユーザーが投稿の著者であるかを確認する
+   */
+  async isAuthor(postId: number, userId: number): Promise<boolean> {
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId },
+      select: { authorId: true },
+    });
+    return post?.authorId === userId;
   }
 }

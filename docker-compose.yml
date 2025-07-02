@@ -5,7 +5,6 @@ services:
       context: ./remix
       target: prod
       args:
-        # ビルド時に環境変数を渡す
         API_BASE_URL: ${API_BASE_URL}
         WS_URL: ${WS_URL}
     container_name: remix_app_prod
@@ -14,12 +13,16 @@ services:
     depends_on:
       api:
         condition: service_healthy
+      schema-generator: # Remixはスキーマ生成に依存
+        condition: service_completed_successfully # schema-generatorが成功裏に完了するまで待つ
     networks:
       - app_network
-    # コンテナ実行時にも環境変数を設定
     environment:
       - API_BASE_URL=${API_BASE_URL}
       - WS_URL=${WS_URL}
+    volumes:
+      # ローカルパッケージをマウント
+      - ./database_schema/client-sdk:/app/database_schema/client-sdk
 
   # Backend API Service (NestJS)
   api:
@@ -32,19 +35,40 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      schema-generator:
+        condition: service_completed_successfully
     networks:
       - app_network
     healthcheck:
-      # curlを使ってヘルスチェックを行う
       test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-    # 必要な環境変数をコンテナに渡す
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - ./database_schema/client-sdk:/app/database_schema/client-sdk # ローカルパッケージをマウント
+
+  # 新しいサービス: Prismaスキーマ生成 & SDKビルド (本番ビルド用)
+  schema-generator:
+    build:
+      context: ./database_schema
+      target: prod # Dockerfileのprodターゲットを使用 (もしあれば)
+    container_name: prisma_schema_prod
+    volumes:
+      - ./database_schema:/app # database_schemaディレクトリ全体をマウント
+    working_dir: /app
+    command: >
+      sh -c "yarn install --pure-lockfile && yarn migrate:deploy && yarn generate && yarn build-sdk"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy # データベースの準備ができてからマイグレーション
 
   # Database Service (PostgreSQL)
   postgres:
@@ -58,7 +82,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      # init.sqlの記述を削除
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]

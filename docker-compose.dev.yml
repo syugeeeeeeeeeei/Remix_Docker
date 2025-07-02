@@ -5,10 +5,16 @@ services:
     container_name: remix_app_dev
     volumes:
       - ./remix:/app
-      - /app/node_modules # ホストのnode_modulesをマウントしない
+      - /app/node_modules # ホストのnode_modulesをマウントしない (Remix自身の依存関係のため)
+      - ./database_schema/client-sdk:/app/database_schema/client-sdk # ローカルパッケージをマウント
     tty: true
     stdin_open: true
-
+    # schema-generatorの完了を待つ (client-sdkのビルド完了を待つ)
+    depends_on:
+      api:
+        condition: service_healthy
+      schema-generator:
+        condition: service_completed_successfully
 
   api:
     build:
@@ -16,30 +22,72 @@ services:
     container_name: api_server_dev
     volumes:
       - ./api:/app
-      - /app/node_modules
+      - /app/node_modules # API自身の依存関係を管理
+      - ./database_schema/client-sdk:/app/database_schema/client-sdk # ローカルパッケージをマウント
     tty: true
     stdin_open: true
+    depends_on:
+      - postgres
+      - schema-generator:
+          condition: service_completed_successfully # client-sdkのビルド完了を待つ
 
+  # 新しいサービス: Prismaスキーマ生成 & SDKビルド
+  schema-generator:
+    build:
+      context: ./database_schema # スキーマ定義の新しいディレクトリをコンテキストとして使用
+    container_name: prisma_schema_dev
+    volumes:
+      - ./database_schema:/app # database_schemaディレクトリ全体をマウント
+    working_dir: /app # 作業ディレクトリをdatabase_schemaに設定
+    command: >
+      sh -c "yarn install --pure-lockfile && yarn migrate:deploy && yarn generate && yarn build-sdk"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    networks:
+      - app_network
+    depends_on:
+      - postgres # データベースの準備ができてからスキーマ生成
 
   postgres:
     container_name: database_dev
+    image: postgres:17-alpine
+    # .envファイルから直接読み込む
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      # init.sqlの記述を削除
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
 
-    # --- 👇 ここから追加 ---
   studio:
     build:
-      context: ./api
-      target: dev
+      context: ./database_schema # スキーマ定義の新しいディレクトリをコンテキストとして使用
     container_name: studio_dev
     networks:
       - app_network
     ports:
       - "5544:5555"
     command: >
-      sh -c "yarn prisma generate && yarn prisma studio --hostname 0.0.0.0"
+      sh -c "yarn studio --hostname 0.0.0.0" # database_schema/package.jsonのstudioスクリプトを実行
     depends_on:
       - postgres
+      - schema-generator # studioもスキーマ生成に依存
     volumes:
-      - ./api:/app
-      - /app/node_modules
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
+      - ./database_schema:/app # database_schemaディレクトリ全体をマウント
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

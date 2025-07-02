@@ -1,3 +1,4 @@
+// api/src/posts/posts.controller.ts
 import {
   Body,
   Controller,
@@ -6,11 +7,12 @@ import {
   Param,
   ParseIntPipe,
   Post,
-  Put, // 👈 追加
+  Put,
   Request,
-  UseGuards, // 👈 追加
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // 👈 追加
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostsService } from './posts.service';
@@ -29,35 +31,42 @@ export class PostsController {
     return await this.postsService.findOne(id);
   }
 
-  // --- 👇 ここから修正 ---
-  @UseGuards(JwtAuthGuard) // 👈 このルートを保護
+  @UseGuards(JwtAuthGuard)
   @Post()
   async create(
-    @Request() req: { user: { userId: number } }, // 👈 リクエストからユーザー情報を取得
+    @Request() req: { user: { userId: number } },
     @Body() createPostDto: Omit<CreatePostDto, 'authorId'>,
   ) {
-    // 認証されたユーザーのIDをauthorIdとして渡す
     const postData = { ...createPostDto, authorId: req.user.userId };
     return await this.postsService.create(postData);
   }
 
-  @UseGuards(JwtAuthGuard) // 👈 このルートを保護
+  @UseGuards(JwtAuthGuard)
   @Put(':id')
   async update(
-    // TODO: 記事の所有者かどうかのチェックを追加する
+    @Request() req: { user: { userId: number } }, // 👈 追加
     @Param('id', ParseIntPipe) id: number,
     @Body() updatePostDto: UpdatePostDto,
   ) {
+    // 記事の所有者かどうかのチェックを追加
+    const isAuthor = await this.postsService.isAuthor(id, req.user.userId);
+    if (!isAuthor) {
+      throw new UnauthorizedException('You are not authorized to update this post.');
+    }
     return await this.postsService.update(id, updatePostDto);
   }
 
-  @UseGuards(JwtAuthGuard) // 👈 このルートを保護
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(
-    // TODO: 記事の所有者かどうかのチェックを追加する
+    @Request() req: { user: { userId: number } }, // 👈 追加
     @Param('id', ParseIntPipe) id: number,
   ) {
+    // 記事の所有者かどうかのチェックを追加
+    const isAuthor = await this.postsService.isAuthor(id, req.user.userId);
+    if (!isAuthor) {
+      throw new UnauthorizedException('You are not authorized to delete this post.');
+    }
     return await this.postsService.remove(id);
   }
-  // --- 👆 ここまで ---
 }

@@ -1,9 +1,21 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+// remix/app/routes/posts.new.tsx
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node"; // LoaderFunctionArgs を追加
 import { json, redirect } from "@remix-run/node";
 import { Form, Link, useActionData } from "@remix-run/react";
+import { getJwt, requireUserSession } from "~/utils/auth.server"; // 👈 requireUserSession と getJwt をインポート
+
+// loader関数を追加して、認証されていない場合はログインページにリダイレクト
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+	await requireUserSession(request); // 認証されていない場合はリダイレクト
+	return null;
+};
 
 // フォームが送信されたときにサーバーサイドで実行される関数
 export const action = async ({ request }: ActionFunctionArgs) => {
+	// 認証済みユーザーのセッションを必須にする
+	const user = await requireUserSession(request); // 認証されていない場合はここでリダイレクトされる
+	const jwt = await getJwt(request); // JWTトークンを取得
+
 	const formData = await request.formData();
 	const title = formData.get("title");
 	const content = formData.get("content");
@@ -18,22 +30,36 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		throw new Error("API_BASE_URL is not defined");
 	}
 
-	// TODO: 認証機能ができたら、authorIdを動的に設定する
-	// Prisma Studioで作成したUserのIDを仮で指定してください
-	const postData = { title, content, authorId: 1 };
+	// 認証されたユーザーのIDをauthorIdとして設定
+	const postData = { title, content, authorId: user.id }; // 👈 user.id を使用
 
-	const res = await fetch(`${apiUrl}/posts`, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(postData),
-	});
+	try {
+		const res = await fetch(`${apiUrl}/posts`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"Authorization": `Bearer ${jwt}`, // 👈 JWTトークンをAuthorizationヘッダーに含める
+			},
+			body: JSON.stringify(postData),
+		});
 
-	if (!res.ok) {
-		return json({ errors: { api: "Failed to create post" } }, { status: 500 });
+		if (!res.ok) {
+			const errorData = await res.json();
+			return json(
+				{ errors: { api: errorData.message || "Failed to create post" } },
+				{ status: res.status },
+			);
+		}
+
+		// 成功したら記事一覧ページにリダイレクト
+		return redirect(`/posts`);
+	} catch (error) {
+		console.error("Failed to create post:", error);
+		return json(
+			{ errors: { api: "An unexpected error occurred while creating the post." } },
+			{ status: 500 },
+		);
 	}
-
-	// 成功したら記事一覧ページにリダイレクト
-	return redirect(`/posts`);
 };
 
 export default function NewPost() {
