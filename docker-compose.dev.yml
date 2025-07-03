@@ -22,7 +22,14 @@ services:
     container_name: database_tools_dev
     working_dir: /app/packages/database
     command: >
-      sh -c "yarn install && yarn migrate:dev && yarn generate && tail -f /dev/null"
+      sh -c "corepack enable && \
+             yarn set version stable && \
+             yarn config set nodeLinker node-modules && \
+             yarn install && \
+             yarn migrate:dev && \
+             yarn generate"
+    tty: true
+    stdin_open: true
     volumes:
       - ./packages/database:/app/packages/database
     environment:
