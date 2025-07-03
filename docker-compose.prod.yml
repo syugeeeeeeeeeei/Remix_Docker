@@ -1,0 +1,13 @@
+services:
+  remix:
+    networks:
+      - app_network
+      - external_network
+    labels:
+      caddy: your_domain.com # あなたのドメインに変更
+      caddy.reverse_proxy: "{{.Name}}:3000"
+
+networks:
+  external_network:
+    external: true
+    name: your_external_network # 外部Caddyが属するネットワーク名

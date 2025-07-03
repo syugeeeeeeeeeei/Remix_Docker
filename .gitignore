@@ -1,3 +1,27 @@
+# Dependency directories
 node_modules/
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Build outputs
+/dist
+/build
+
+# IDE & OS files
+.idea/
+.vscode/
+.DS_Store
+
+# Env files
+.env
+.env.*.local
 *.env
-mise.toml
+
+# Logs
+logs
+*.log
