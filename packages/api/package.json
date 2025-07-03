@@ -2,24 +2,31 @@
 	"name": "api",
 	"version": "1.0.0",
 	"private": true,
+	"type": "module",
 	"scripts": {
-	  "build": "nest build",
-	  "start:dev": "nest start --watch",
-	  "start:prod": "node dist/main.js",
-	  "typecheck": "tsc --noEmit"
+		"build": "vite build",
+		"start:dev": "vite",
+		"start:prod": "node dist/main.js",
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-	  "@my-app/database": "workspace:*",
-	  "@nestjs/common": "^11.0.1",
-	  "@nestjs/core": "^11.0.1",
-	  "@nestjs/platform-express": "^11.0.1",
-	  "reflect-metadata": "^0.2.2",
-	  "rxjs": "^7.8.1"
+		"@my-app/database": "workspace:*",
+		"@nestjs/common": "^11.0.1",
+		"@nestjs/core": "^11.0.1",
+		"@nestjs/platform-express": "^11.0.1",
+		"reflect-metadata": "^0.2.2",
+		"rxjs": "^7.8.1"
 	},
 	"devDependencies": {
-	  "@nestjs/cli": "^11.0.0",
-	  "@nestjs/schematics": "^11.0.0",
-	  "@types/node": "^22.10.7",
-	  "typescript": "^5.1.6"
+		"@nestjs/cli": "^11.0.0",
+		"@nestjs/schematics": "^11.0.0",
+		"@swc/cli": "^0.6.0",
+		"@swc/core": "^1.10.7",
+		"@types/node": "^22.10.7",
+		"typescript": "^5.1.6",
+		"unplugin-swc": "^1.4.5",
+		"vite": "^5.2.11",
+		"vite-plugin-node": "^3.1.0",
+		"vite-tsconfig-paths": "^4.3.2"
 	}
-  }
+}

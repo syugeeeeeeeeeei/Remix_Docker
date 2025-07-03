@@ -6,13 +6,10 @@
     "packages/*"
   ],
   "scripts": {
+    "build": "yarn workspaces foreach --all  -t run build",
     "dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
-    "build": "docker-compose build",
     "stop": "docker-compose down",
     "typecheck": "yarn workspaces foreach -pt run typecheck"
   },
-  "packageManager": "yarn@4.9.2",
-  "dependencies": {
-    "typescript": "^5.8.3"
-  }
+  "packageManager": "yarn@4.9.2"
 }

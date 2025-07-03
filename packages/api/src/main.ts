@@ -4,12 +4,19 @@ import { AppModule } from './app.module';
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
 
-	// 開発時にRemixからのアクセスを許可するためのCORS設定
 	app.enableCors({
-		origin: 'http://localhost:5173', // 開発用RemixサーバーのURL
+		origin: 'http://localhost:5173',
 		credentials: true,
 	});
 
 	await app.listen(3000);
+
+	// Vite HMRに対応するための設定
+	if (import.meta.hot) {
+		import.meta.hot.accept();
+		import.meta.hot.dispose(() => app.close());
+	}
 }
-bootstrap();
+
+// Viteで起動するためにエクスポート
+export const viteNodeApp = bootstrap();

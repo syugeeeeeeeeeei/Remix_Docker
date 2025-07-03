@@ -4,20 +4,27 @@
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
 	"scripts": {
-	  "build": "tsc",
-	  "postbuild": "prisma generate",
-	  "generate": "prisma generate",
-	  "migrate:dev": "prisma migrate dev",
-	  "migrate:deploy": "prisma migrate deploy",
-	  "studio": "prisma studio",
-	  "typecheck": "tsc --noEmit"
+		"build": "tsc",
+		"postbuild": "prisma generate",
+		"generate": "prisma generate",
+		"migrate:dev": "prisma migrate dev",
+		"migrate:deploy": "prisma migrate deploy",
+		"studio": "prisma studio",
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-	  "@prisma/client": "6.11.0"
+		"@prisma/client": "6.11.0"
 	},
 	"devDependencies": {
-	  "prisma": "^6.11.0",
-	  "typescript": "^5.1.6"
+		"prisma": "^6.11.0",
+		"typescript": "^5.1.6"
 	}
-  }
+}

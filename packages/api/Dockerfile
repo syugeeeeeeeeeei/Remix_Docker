@@ -2,22 +2,22 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-# 依存関係のインストールを効率化するため、package.jsonとlockファイルを先にコピー
-COPY package.json yarn.lock ./
-COPY packages/database/package.json ./packages/database/
+# package.json のみをコピー（yarn.lockはコピーしない）
+COPY package.json ./
 COPY packages/api/package.json ./packages/api/
+COPY packages/database/package.json ./packages/database/
+COPY packages/remix/package.json ./packages/remix/
 
-# Corepackを有効化し、Yarnのバージョンと設定を行う
+# Corepackを有効化し、Yarnをセットアップして依存関係をインストール
 RUN corepack enable && \
 	yarn set version stable && \
 	yarn config set nodeLinker node-modules && \
-	yarn install --frozen-lockfile
+	yarn install && \
+	yarn build
 
 # 全てのソースコードをコピー
 COPY . .
 
-# APIパッケージのみをビルド
-RUN yarn workspace api build
 
 # 2. 本番ステージ: 実行に必要なファイルのみをコピー
 FROM node:22-alpine AS prod

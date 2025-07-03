@@ -5,7 +5,8 @@ services:
     volumes:
       - ./packages/remix:/app/packages/remix
       - ./packages/database:/app/packages/database
-    command: yarn workspace remix-app dev
+    command: >
+      yarn workspace remix-app dev
 
   api:
     ports:
@@ -13,7 +14,8 @@ services:
     volumes:
       - ./packages/api:/app/packages/api
       - ./packages/database:/app/packages/database
-    command: yarn workspace api start:dev
+    command: >
+      yarn workspace api start:dev
 
   database-tools:
     build:
