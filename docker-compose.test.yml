@@ -1,5 +1,0 @@
-services:
-  web-test:
-    image: nginx:alpine
-    ports:
-      - "80:80"
