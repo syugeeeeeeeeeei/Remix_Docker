@@ -11,5 +11,8 @@
     "stop": "docker-compose down",
     "typecheck": "yarn workspaces foreach -pt run typecheck"
   },
+  "resolutions": {
+    "esbuild": "^0.19.12"
+  },
   "packageManager": "yarn@4.9.2"
 }

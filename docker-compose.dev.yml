@@ -6,7 +6,7 @@ services:
       - ./packages/remix:/app/packages/remix
       - ./packages/database:/app/packages/database
     command: >
-      yarn workspace remix-app dev
+      sh -c "yarn workspace @my-app/database generate && yarn workspace remix-app dev"
 
   api:
     ports:
@@ -15,7 +15,7 @@ services:
       - ./packages/api:/app/packages/api
       - ./packages/database:/app/packages/database
     command: >
-      yarn workspace api start:dev
+      sh -c "yarn workspace @my-app/database generate && yarn workspace api start:dev"
 
   database-tools:
     build:

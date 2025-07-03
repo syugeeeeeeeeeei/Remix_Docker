@@ -1,3 +1,4 @@
+import path from 'path'; // <--- この行を追加
 import swc from 'unplugin-swc';
 import { defineConfig } from 'vite';
 import { VitePluginNode } from 'vite-plugin-node';
@@ -7,9 +8,13 @@ export default defineConfig({
 	server: {
 		port: 3000,
 	},
-	//【重要】このセクションを追加
 	resolve: {
 		preserveSymlinks: true,
+		// ▼▼▼ このalias設定をここに追加 ▼▼▼
+		alias: {
+			'@my-app/database': path.resolve(__dirname, '../database/src/index.ts'),
+		},
+		// ▲▲▲ ここまで ▲▲▲
 	},
 	plugins: [
 		...VitePluginNode({
