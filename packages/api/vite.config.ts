@@ -7,6 +7,10 @@ export default defineConfig({
 	server: {
 		port: 3000,
 	},
+	//【重要】このセクションを追加
+	resolve: {
+		preserveSymlinks: true,
+	},
 	plugins: [
 		...VitePluginNode({
 			adapter: 'nest',
@@ -14,7 +18,6 @@ export default defineConfig({
 			exportName: 'viteNodeApp',
 			tsCompiler: 'swc',
 		}),
-		// SWCプラグインを追加
 		swc.vite(),
 		tsconfigPaths(),
 	],
@@ -22,7 +25,6 @@ export default defineConfig({
 		exclude: [
 			'@nestjs/microservices',
 			'@nestjs/websockets',
-			// ... その他の除外モジュール
 		],
 	},
 });
