@@ -1,11 +1,11 @@
+# docker-compose.prod.yml
 services:
   remix:
     networks:
-      - app_network
-      - external_network
+      - external_network # 外部ネットワークに参加
     labels:
       caddy: your_domain.com # あなたのドメインに変更
-      caddy.reverse_proxy: "{{.Name}}:3000"
+      caddy.reverse_proxy: "{{.Name}}:3000" # サービス名とポートでリバースプロキシ設定
 
 networks:
   external_network:

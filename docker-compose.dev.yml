@@ -1,42 +1,117 @@
+# docker-compose.dev.yml (修正版)
 services:
   remix:
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./packages/remix:/app/packages/remix
-      - ./packages/database:/app/packages/database
-    command: >
-      sh -c "yarn workspace @my-app/database generate && yarn workspace remix-app dev"
-
-  api:
-    ports:
-      - "3001:3000"
-    volumes:
-      - ./packages/api:/app/packages/api
-      - ./packages/database:/app/packages/database
-    command: >
-      sh -c "yarn workspace @my-app/database generate && yarn workspace api start:dev"
-
-  database-tools:
     build:
-      context: .
-      dockerfile: ./packages/database/Dockerfile.dev
-    container_name: database_tools_dev
-    working_dir: /app/packages/database
-    command: >
-      sh -c "corepack enable && \
-             yarn set version stable && \
-             yarn config set nodeLinker node-modules && \
-             yarn install && \
-             yarn migrate:dev && \
-             yarn generate"
-    tty: true
-    stdin_open: true
+      context: ./compose/remix
+      dockerfile: Dockerfile
+    container_name: remix_dev
+    ports:
+      - "5173:5173" # Remix開発サーバーのポート
     volumes:
-      - ./packages/database:/app/packages/database
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-    depends_on:
-      - postgres
+      - ./compose/remix:/app:delegated # ホットリロードのためのマウント
+      - /app/node_modules # ホストのnode_modulesとの干渉を防ぐための匿名ボリューム
+      - prisma_types_volume:/app/prisma-types:ro
+    command: >
+      sh -c "yarn dev" # 'dev'スクリプトでVite開発サーバーを起動
     networks:
       - app_network
+    depends_on:
+      api:
+        condition: service_healthy
+      orm: # ormコンテナがマイグレーションと型生成を完了するまで待機
+        condition: service_completed_successfully
+
+  api:
+    build:
+      context: ./compose/api
+      dockerfile: Dockerfile
+    container_name: api_dev
+    ports:
+      - "3000:3000" # ホストの3000ポートをAPIにマッピング
+    volumes:
+      - ./compose/api:/app:delegated # ホットリロードのためのマウント
+      - /app/node_modules # 匿名ボリューム
+      - prisma_types_volume:/app/prisma-types:ro
+    command: >
+      sh -c "yarn dev" # 'dev'スクリプトでHono開発サーバーを起動
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      orm: # ormコンテナがマイグレーションと型生成を完了するまで待機
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  orm:
+    build:
+      context: ./compose/orm
+      dockerfile: Dockerfile
+    container_name: orm_dev
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - ./compose/orm:/app:delegated # スキーマ変更を反映するためのマウント
+      - /app/node_modules # 匿名ボリューム
+      - prisma_types_volume:/app/prisma-types # ormコンテナはこのボリュームに書き込む
+    # ★変更: マイグレーションと型生成のみを実行し、完了後コンテナを終了させる
+    command: >
+      sh -c "npx prisma migrate dev --name init --skip-generate && npx prisma generate"
+
+  # ★追加: Prisma Studio専用のコンテナ
+  prisma_studio:
+    build:
+      context: ./compose/orm # ormと同じビルドコンテキストを使用
+      dockerfile: Dockerfile
+    container_name: prisma_studio_dev
+    ports:
+      - "5555:5555" # Prisma Studio用のポート開放
+    networks:
+      - app_network
+    depends_on:
+      orm: # ormコンテナがマイグレーションと型生成を完了するまで待機
+        condition: service_completed_successfully
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - ./compose/orm:/app:delegated # スキーマ変更を反映するためのマウント
+      - /app/node_modules # 匿名ボリューム
+      - prisma_types_volume:/app/prisma-types:ro # Studioは型生成はしないが、Prisma Clientが必要なためreadonlyでマウント
+    # ★追加: Prisma Studioを常駐プロセスとして起動
+    command: npx prisma studio --port 5555
+    tty: true # Studioのインタラクティブな利用のために必要
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres_dev
+    restart: unless-stopped
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data # 開発環境用のPostgresデータボリューム
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data_dev:
+  prisma_types_volume:
