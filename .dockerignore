@@ -14,8 +14,6 @@ packages/*/node_modules
 # ビルド成果物
 dist
 build
-packages/*/dist
-packages/*/build
 
 # Git
 .git
