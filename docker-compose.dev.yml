@@ -9,7 +9,6 @@ services:
     volumes:
       - ./compose/remix:/app:delegated
       - /app/node_modules
-      - prisma_client_volume:/app/PrismaClient:ro
     command: sh -c "yarn dev"
 
   api:
@@ -19,7 +18,6 @@ services:
     volumes:
       - ./compose/api:/app:delegated
       - /app/node_modules
-      - prisma_client_volume:/app/PrismaClient:ro
     command: sh -c "yarn dev"
 
   orm:
@@ -27,7 +25,6 @@ services:
     volumes:
       - ./compose/orm:/app:delegated
       - /app/node_modules
-      - prisma_client_volume:/app/PrismaClient
     command: sh -c "npx prisma migrate dev --name init && npx prisma generate"
 
   # Prisma Studioは開発環境でのみ起動

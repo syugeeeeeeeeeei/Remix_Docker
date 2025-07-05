@@ -6,6 +6,7 @@ services:
     build:
       context: ./compose/remix
       dockerfile: Dockerfile
+    command: sh -c "yarn start"
     networks:
       - app_network
     depends_on:
@@ -16,11 +17,14 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - API_BASE_URL=http://api:3000
+    volumes:
+      - prisma_client_volume:/app/PrismaClient
 
   api:
     build:
       context: ./compose/api
       dockerfile: Dockerfile
+    command: sh -c "yarn start"
     networks:
       - app_network
     depends_on:
@@ -35,6 +39,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - prisma_client_volume:/app/PrismaClient
 
   orm:
     build:
@@ -47,6 +53,8 @@ services:
         condition: service_healthy
     environment:
       - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - prisma_client_volume:/app/PrismaClient
 
   postgres:
     image: postgres:17-alpine
@@ -67,4 +75,4 @@ networks:
     driver: bridge
 
 volumes:
-  prisma_client_volume: # 生成されたPrisma Clientを共有するためのボリューム
+  prisma_client_volume:

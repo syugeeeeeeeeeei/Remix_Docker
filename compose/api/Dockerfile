@@ -19,9 +19,3 @@ RUN yarn install --network-timeout 100000 && \
 # Copy source code and tsconfig
 COPY src/ ./src/
 COPY tsconfig.json ./
-
-# Build the API (assuming 'build' script in package.json)
-# RUN yarn build
-
-# Set default command
-CMD ["yarn", "start"]
