@@ -18,7 +18,8 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - API_BASE_URL=http://api:3000
     volumes:
-      - prisma_client_volume:/app/PrismaClient
+      - prisma_client_volume:/app/ShardTypes/PrismaClient:ro
+      - user_def_types_volume:/app/ShardTypes/UserDefTypes
 
   api:
     build:
@@ -40,7 +41,8 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - prisma_client_volume:/app/PrismaClient
+      - prisma_client_volume:/app/ShardTypes/PrismaClient:ro
+      - user_def_types_volume:/app/ShardTypes/UserDefTypes
 
   orm:
     build:
@@ -54,7 +56,7 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL}
     volumes:
-      - prisma_client_volume:/app/PrismaClient
+      - prisma_client_volume:/app/ShardTypes/PrismaClient
 
   postgres:
     image: postgres:17-alpine
@@ -76,3 +78,4 @@ networks:
 
 volumes:
   prisma_client_volume:
+  user_def_types_volume:

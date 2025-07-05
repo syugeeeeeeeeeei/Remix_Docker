@@ -1,7 +1,7 @@
 // compose/orm/prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
-  output   = "/app/PrismaClient/global" // ★既存: ここで出力先を指定
+  output   = "/app/ShardTypes/PrismaClient" // ★既存: ここで出力先を指定
 }
 
 datasource db {
