@@ -5,6 +5,11 @@ services:
   remix:
     container_name: remix
     restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+      orm:
+        condition: service_completed_successfully
     networks:
       - external_network # Caddy用の外部ネットワークを追加
     labels:
@@ -14,6 +19,11 @@ services:
   api:
     container_name: api
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   orm:
     container_name: orm
