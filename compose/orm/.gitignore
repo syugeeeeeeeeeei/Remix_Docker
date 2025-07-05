@@ -15,5 +15,4 @@ node_modules
 
 #!.yarn/cache
 .pnp.*
-
-/generated/prisma
+PrismaClient/
