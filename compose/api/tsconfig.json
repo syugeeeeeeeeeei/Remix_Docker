@@ -5,15 +5,15 @@
     "strict": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    
     "types": ["node"],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "outDir": "./dist",
-    "baseUrl": ".",
+    "baseUrl": "./",
     "paths": {
-      "@prisma/client/*": ["/app/prisma-types/*"]
-    }
+      "@/*": ["src/*"],
+      "@PrismaClient/*": ["./PrismaClient/global/*"]
+    },
   },
   "exclude": ["node_modules"]
 }

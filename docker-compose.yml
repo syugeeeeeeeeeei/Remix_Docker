@@ -1,43 +1,37 @@
-# docker-compose.yml
+# docker-compose.yml (共通ベースファイル)
+# 開発・本番で共通のビルド情報、依存関係、基本的なネットワーク設定などを定義します。
+
 services:
   remix:
     build:
       context: ./compose/remix
       dockerfile: Dockerfile
-    container_name: remix
-    restart: unless-stopped
     networks:
       - app_network
     depends_on:
       api:
         condition: service_healthy
-      orm: # ormコンテナが型生成を完了するまで待機
+      orm:
         condition: service_completed_successfully
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - API_BASE_URL=http://api:3000
-    volumes:
-      - prisma_types_volume:/app/prisma-types:ro # readonlyで型情報をマウント
 
   api:
     build:
       context: ./compose/api
       dockerfile: Dockerfile
-    container_name: api
-    restart: unless-stopped
     networks:
       - app_network
     depends_on:
       postgres:
         condition: service_healthy
-      orm: # ormコンテナが型生成を完了するまで待機
+      orm:
         condition: service_completed_successfully
     environment:
       - DATABASE_URL=${DATABASE_URL}
-    volumes:
-      - prisma_types_volume:/app/prisma-types:ro # readonlyで型情報をマウント
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"] # APIが3000ポートで稼働していることを想定
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -46,7 +40,6 @@ services:
     build:
       context: ./compose/orm
       dockerfile: Dockerfile
-    container_name: orm
     networks:
       - app_network
     depends_on:
@@ -54,18 +47,9 @@ services:
         condition: service_healthy
     environment:
       - DATABASE_URL=${DATABASE_URL}
-    # Prismaのマイグレーションと型生成を実行
-    command: >
-      sh -c "npx prisma migrate deploy && npx prisma generate --output /app/prisma-types"
-    volumes:
-      - prisma_types_volume:/app/prisma-types # ormコンテナはこのボリュームに書き込む
 
   postgres:
     image: postgres:17-alpine
-    container_name: postgres
-    restart: unless-stopped
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -83,5 +67,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
-  prisma_types_volume: # Prismaの生成された型を共有するための名前付きボリューム
+  prisma_client_volume: # 生成されたPrisma Clientを共有するためのボリューム

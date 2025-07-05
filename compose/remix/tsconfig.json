@@ -24,9 +24,8 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./app/*"],
-      "@prisma/client/*": ["/app/prisma-types/*"],
+      "@PrismaClient/*": ["./PrismaClient/global/*"]
     },
-
     // Vite takes care of building everything, not tsc.
     "noEmit": true
   }

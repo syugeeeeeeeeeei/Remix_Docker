@@ -1,6 +1,6 @@
 // compose/api/src/index.ts
 import { serve } from '@hono/node-server';
-import { PrismaClient } from '@prisma/client/index.js'; // ★追加: 生成されたPrismaClientをインポート
+import { PrismaClient } from '@PrismaClient/index.js'; // ★追加: 生成されたPrismaClientをインポート
 import { Hono } from 'hono';
 
 const app = new Hono()
