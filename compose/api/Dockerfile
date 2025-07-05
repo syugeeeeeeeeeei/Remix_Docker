@@ -3,11 +3,6 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Install corepack and yarn v4
-RUN corepack enable && \
-	yarn set version stable && \
-	yarn config set nodeLinker node-modules
-
 # ★追加: curlのインストール
 RUN apk add --no-cache curl
 
